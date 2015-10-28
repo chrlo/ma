@@ -1,10 +1,13 @@
-import java.lang.reflect.Array;
+import gurobi.GRB;
+import gurobi.GRBEnv;
+import gurobi.GRBException;
+import gurobi.GRBLinExpr;
+import gurobi.GRBModel;
+import gurobi.GRBVar;
+
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
-import java.util.Iterator;
-
-import gurobi.*;
 public class MIP {
 	
 	public static void main(String[] args) {
@@ -12,56 +15,67 @@ public class MIP {
 			GRBEnv env = new GRBEnv("mip.log");
 			GRBModel model = new GRBModel(env);
 			
+			//Read input 
+			Instance instance = new Instance();
+			Reader reader = new Reader();
+			instance = reader.read(instance);
+			
+			//preprocessing
+			//.
+			//.
+			//.
+			
 			//create capacity and weight vector
-			Hashtable<Integer,Integer[]> commodities = new Hashtable<Integer,Integer[]>();  // first int= origin, second= destination, third= weight
-			Hashtable<Integer,Double[]> services = new Hashtable<Integer,Double[]>(); // first double= capacity, second= fixed cost, third= variable cost coefficient
-			Hashtable<Integer,ArrayList<Integer>> paths = new Hashtable<Integer,ArrayList<Integer>>(); // first element on list= commodity, rest= services on path
+			Hashtable<Integer, Double[]> commodities = instance.getCommodities();  // first int= origin, second= destination, third= weight
+			Hashtable<Integer,Double[]> services = instance.getServices(); // first double= capacity, second= fixed cost, third= variable cost coefficient
+			Hashtable<Integer, ArrayList<String>> paths = instance.getPaths(); // first element on list= commodity, rest= services on path
+			Hashtable<String,Double> commodityMap = instance.getCommodityMap();
 			// fill them with data:
 			
-			commodities.put(0,new Integer[] {1,1,1});
-			commodities.put(1,new Integer[] {2,2,1});
-			commodities.put(2,new Integer[] {3,3,1});
-			
-			services.put(0,new Double[] {1.,0.,1.});
-			services.put(1,new Double[] {1.,0.,1.});
-			services.put(2,new Double[] {1.,0.,1.});
-			services.put(3,new Double[] {1.,4.,0.});
-			services.put(4,new Double[] {1.,4.,0.});
-			services.put(5,new Double[] {1.,3.,0.});
-			services.put(6,new Double[] {2.,2.,0.});
-			services.put(7,new Double[] {1.,0.,1.});
-			services.put(8,new Double[] {1.,0.,1.});
-			services.put(9,new Double[] {1.,0.,1.});
-			ArrayList<Integer> list1 = new ArrayList<Integer>();
-			list1.add(0);
-			list1.add(3);
-			paths.put(0, list1);
-			ArrayList<Integer> list2 = new ArrayList<Integer>();
-			list2.add(0);
-			list2.add(0);
-			list2.add(6);
-			list2.add(7);
-			paths.put(3, list2);
-			ArrayList<Integer> list3 = new ArrayList<Integer>();
-			list3.add(1);
-			list3.add(4);
-			paths.put(1, list3);
-			ArrayList<Integer> list4 = new ArrayList<Integer>();
-			list4.add(1);
-			list4.add(1);
-			list4.add(6);
-			list4.add(8);
-			paths.put(4, list4);
-			ArrayList<Integer> list5 = new ArrayList<Integer>();
-			list5.add(2);
-			list5.add(5);
-			paths.put(2, list5);
-			ArrayList<Integer> list6 = new ArrayList<Integer>();
-			list6.add(2);
-			list6.add(2);
-			list6.add(6);
-			list6.add(9);
-			paths.put(5, list6);
+//			commodities.put(0,new Integer[] {1,1,1});
+//			commodities.put(1,new Integer[] {2,2,1});
+//			commodities.put(2,new Integer[] {3,3,1});
+//			
+//			services.put(0,new Double[] {1.,0.,1.});
+//			services.put(1,new Double[] {1.,0.,1.});
+//			services.put(2,new Double[] {1.,0.,1.});
+//			services.put(3,new Double[] {1.,4.,0.});
+//			services.put(4,new Double[] {1.,4.,0.});
+//			services.put(5,new Double[] {1.,3.,0.});
+//			services.put(6,new Double[] {2.,2.,0.});
+//			services.put(7,new Double[] {1.,0.,1.});
+//			services.put(8,new Double[] {1.,0.,1.});
+//			services.put(9,new Double[] {1.,0.,1.});
+//			ArrayList<Integer> list1 = new ArrayList<Integer>();
+//			list1.add(0);
+//			list1.add(3);
+//			paths.put(0, list1);
+//			ArrayList<Integer> list2 = new ArrayList<Integer>();
+//			list2.add(0);
+//			list2.add(0);
+//			list2.add(6);
+//			list2.add(7);
+//			paths.put(3, list2);
+//			ArrayList<Integer> list3 = new ArrayList<Integer>();
+//			list3.add(1);
+//			list3.add(4);
+//			paths.put(1, list3);
+//			ArrayList<Integer> list4 = new ArrayList<Integer>();
+//			list4.add(1);
+//			list4.add(1);
+//			list4.add(6);
+//			list4.add(8);
+//			paths.put(4, list4);
+//			ArrayList<Integer> list5 = new ArrayList<Integer>();
+//			list5.add(2);
+//			list5.add(5);
+//			paths.put(2, list5);
+//			ArrayList<Integer> list6 = new ArrayList<Integer>();
+//			list6.add(2);
+//			list6.add(2);
+//			list6.add(6);
+//			list6.add(9);
+//			paths.put(5, list6);
 			
 			
 			
@@ -74,7 +88,7 @@ public class MIP {
 				y[i]  = model.addVar(0.0, 4.0, 0.0, GRB.BINARY, "y"+(i+1));
 			}
 			
-			Hashtable<Integer,Hashtable<Integer,GRBVar>> x = new Hashtable<Integer,Hashtable<Integer,GRBVar>>(); // key= commodities, element= hashtable of services, matching service number to variable
+			Hashtable<Double,Hashtable<Double,GRBVar>> x = new Hashtable<Double,Hashtable<Double,GRBVar>>(); // key= commodities, element= hashtable of services, matching service number to variable
 			GRBVar[] z;
 			z = new GRBVar[paths.size()]; //one variable for each path
 			
@@ -91,14 +105,14 @@ public class MIP {
 //			z[5]  = model.addVar(0.0, 0.0, 0.0, GRB.BINARY, "z"+(6));
 			
 			for (int l = 0; l < paths.size(); l++) {
-				if(x.get(paths.get(l).get(0)) == null){ //create new hashmap for services of a commodity
-					Hashtable<Integer,GRBVar> hash = new Hashtable<Integer,GRBVar>();
-					x.put(paths.get(l).get(0), hash);
+				if(x.get(commodityMap.get(paths.get(l).get(0))) == null){ //create new hashmap for services of a commodity
+					Hashtable<Double,GRBVar> hash = new Hashtable<Double,GRBVar>();
+					x.put(commodityMap.get(paths.get(l).get(0)), hash);
 				}
 				for (int m = 1; m < paths.get(l).size(); m++){
-					if(!x.get(paths.get(l).get(0)).contains(paths.get(l).get(m))){// if variable doesnt already exist, create it
-						GRBVar var = model.addVar(0.0, 3.0, 0.0, GRB.BINARY, "x"+(paths.get(l).get(0)+1)+","+(paths.get(l).get(m)+1));;
-						x.get(paths.get(l).get(0)).put(paths.get(l).get(m), var);
+					if(!x.get(commodityMap.get(paths.get(l).get(0))).contains(commodityMap.get(paths.get(l).get(m)))){// if variable doesnt already exist, create it
+						GRBVar var = model.addVar(0.0, 3.0, 0.0, GRB.BINARY, "x"+(commodityMap.get(paths.get(l).get(0))+1)+","+(commodityMap.get(paths.get(l).get(m))+1));;
+						x.get(commodityMap.get(paths.get(l).get(0))).put(commodityMap.get(paths.get(l).get(m)), var);
 					}
 				}
 				
@@ -192,20 +206,20 @@ public class MIP {
 						while(pathEnu.hasMoreElements()){
 							Object element3 = pathEnu.nextElement();
 							// create an array list dummy as a copy of paths.get(element3) and change the 0th element, such that it doesnt equal element2. (otherwise the next if statement might be true for wrong reasons
-							ArrayList<Integer> dummy = new ArrayList<Integer>();
+							ArrayList<Double> dummy = new ArrayList<Double>();
 							for (int i = 0; i < paths.get(element3).size() ; i++) {
 								if(i ==0){
 									
-									dummy.add(-1);
+									dummy.add(-1.);
 									
 								}else{
-										dummy.add(paths.get(element3).get(i));
+										dummy.add(commodityMap.get(paths.get(element3).get(i)));
 									 }
 								
 								
 							}
 							
-							if ( dummy.contains(element2) && paths.get(element3).get(0).equals(element)) { 
+							if ( dummy.contains(element2) && commodityMap.get(paths.get(element3).get(0)).equals(element)) { 
 								epsilon[countEpsilon].addTerm(-1, z[(int)element3]);
 								//System.out.println("-"+z[(int)element3].get(GRB.StringAttr.VarName));
 							}
@@ -226,7 +240,7 @@ public class MIP {
 				zeta[l] = new GRBLinExpr();
 				while(pathEnu.hasMoreElements()){
 					Object element = pathEnu.nextElement();
-					if(paths.get(element).get(0) == l){
+					if(commodityMap.get(paths.get(element).get(0)) == (double)l){
 						zeta[l].addTerm(1, z[(int)element]);
 						System.out.println(z[(int)element].get(GRB.StringAttr.VarName));
 					}
