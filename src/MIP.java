@@ -29,7 +29,7 @@ public class MIP {
 			Hashtable<Integer, Double[]> commodities = instance.getCommodities();  // first int= origin, second= destination, third= weight
 			Hashtable<Integer,Double[]> services = instance.getServices(); // first double= capacity, second= fixed cost, third= variable cost coefficient
 			Hashtable<Integer, ArrayList<String>> paths = instance.getPaths(); // first element on list= commodity, rest= services on path
-			Hashtable<String,Double> commodityMap = instance.getCommodityMap();
+			Hashtable<String,Double> commodityMap = instance.getCommodityMap(); // maps commodity names to a unique number
 			// fill them with data:
 			
 //			commodities.put(0,new Integer[] {1,1,1});
@@ -104,8 +104,8 @@ public class MIP {
 //			z[4]  = model.addVar(1.0, 1.0, 0.0, GRB.BINARY, "z"+(5));
 //			z[5]  = model.addVar(0.0, 0.0, 0.0, GRB.BINARY, "z"+(6));
 			
-			for (int l = 0; l < paths.size(); l++) {
-				if(x.get(commodityMap.get(paths.get(l).get(0))) == null){ //create new hashmap for services of a commodity
+			for (int l = 0; l < paths.size(); l++) { // every service on a path may create an x variable, as every path is uniquely assigned to a commodity (one service might be in multiple paths for the same commodity)
+				if(x.get(commodityMap.get(paths.get(l).get(0))) == null){ //create new hashmap for a commodity if commodity appears for the first time
 					Hashtable<Double,GRBVar> hash = new Hashtable<Double,GRBVar>();
 					x.put(commodityMap.get(paths.get(l).get(0)), hash);
 				}
@@ -124,7 +124,7 @@ public class MIP {
 			GRBLinExpr expr = new GRBLinExpr();
 			for (int i = 0; i < y.length; i++) {
 			
-					expr.addTerm(services.get(i)[1], y[i]);
+					expr.addTerm(services.get(i)[1], y[i]); // fixed cost times y_i
 					//System.out.println(services.get(i)[1]+","+y[i].get(GRB.StringAttr.VarName));
 			
 			}
@@ -136,7 +136,7 @@ public class MIP {
 				while(f.hasMoreElements()) {
 					countX++;
 					Object element2 = f.nextElement(); // Service
-					expr.addTerm(services.get(element2)[2]*commodities.get(element)[2], x.get(element).get(element2));
+					expr.addTerm(services.get(element2)[2]*commodities.get(element)[2], x.get(element).get(element2)); //variable costs times weight times x_s^k
 				//	System.out.println(services.get(element2)[2]*commodities.get(element)[2]+","+x.get(element).get(element2).get(GRB.StringAttr.VarName));
 				}
 			}
@@ -161,10 +161,10 @@ public class MIP {
 					beta[i].addTerm(services.get(i)[0], y[i]); //u_w(s)y_s
 					//System.out.println(services.get(i)[0]+""+y[i].get(GRB.StringAttr.VarName));
 					Enumeration enu = x.keys(); 
-					while(enu.hasMoreElements()){
+					while(enu.hasMoreElements()){ //iterate over commodities
 						Object element = enu.nextElement();
-						if (x.get(element).get(i) != null) {// x_s^{k} exists: s could be used for k
-							beta[i].addTerm(-(commodities.get(element)[2]), x.get(element).get(i)); //d_w(k)x_s^k
+						if (x.get(element).get(i) != null) {// x_s^{k} exists: s could be used for k and the relevant term is added 
+							beta[i].addTerm(-(commodities.get(element)[2]), x.get(element).get(i)); //-d_w(k)x_s^k
 						//	System.out.println(-(commodities.get(element)[2])+","+ x.get(element).get(i).get(GRB.StringAttr.VarName));
 						}
 						
@@ -175,7 +175,7 @@ public class MIP {
 			}
 			
 			Enumeration enu2 = x.keys();
-			int countDelta = 0;
+			int countDelta = 0; 
 			while (enu2.hasMoreElements()) { // enumerate over commodities
 					Object element = enu2.nextElement();
 					Enumeration enu22 = x.get(element).keys(); 
@@ -187,25 +187,25 @@ public class MIP {
 						delta[countDelta].addTerm(-1, x.get(element).get(element2));
 						//System.out.println("-"+ x.get(element).get(element2).get(GRB.StringAttr.VarName));
 
-						model.addConstr(delta[countDelta], GRB.GREATER_EQUAL, 0, "delta"+(countDelta+1));
+						model.addConstr(delta[countDelta], GRB.GREATER_EQUAL, 0, "delta"+(countDelta+1)); // for every existing x_s^k variable there is one inequality y_s - x_s^k >= 0
 						countDelta++;
 					}
 			}
 			//System.out.println(countDelta);
 			Enumeration enu3 = x.keys();
 			int countEpsilon = 0;
-			while (enu3.hasMoreElements()) { // enumerate over commodities
+			while (enu3.hasMoreElements()) { // iterate over commodities
 					Object element = enu3.nextElement();
 					Enumeration enu32 = x.get(element).keys(); 
-					while(enu32.hasMoreElements()){ // enumerate over services
+					while(enu32.hasMoreElements()){ // iterate over services
 						Object element2 = enu32.nextElement();
 						epsilon[countEpsilon] = new GRBLinExpr();
-						epsilon[countEpsilon].addTerm(1, x.get(element).get(element2));
+						epsilon[countEpsilon].addTerm(1, x.get(element).get(element2)); // for every existing x_s^k variable there is one inequality
 						//System.out.println(x.get(element).get(element2).get(GRB.StringAttr.VarName));
 						Enumeration pathEnu = paths.keys();
-						while(pathEnu.hasMoreElements()){
+						while(pathEnu.hasMoreElements()){ //iterate over all paths
 							Object element3 = pathEnu.nextElement();
-							// create an array list dummy as a copy of paths.get(element3) and change the 0th element, such that it doesnt equal element2. (otherwise the next if statement might be true for wrong reasons
+							// create an array list dummy as a copy of paths.get(element3) and change the 0th element, such that it doesnt equal element2. (otherwise the next if statement might be true for wrong reasons)
 							ArrayList<Double> dummy = new ArrayList<Double>();
 							for (int i = 0; i < paths.get(element3).size() ; i++) {
 								if(i ==0){
@@ -219,7 +219,7 @@ public class MIP {
 								
 							}
 							
-							if ( dummy.contains(element2) && commodityMap.get(paths.get(element3).get(0)).equals(element)) { 
+							if ( dummy.contains(element2) && commodityMap.get(paths.get(element3).get(0)).equals(element)) { // if current service is on the current path and the current path belongs to the current commodity: add - z_p^k to the inequality
 								epsilon[countEpsilon].addTerm(-1, z[(int)element3]);
 								//System.out.println("-"+z[(int)element3].get(GRB.StringAttr.VarName));
 							}
@@ -234,14 +234,14 @@ public class MIP {
 					
 					
 			
-			for (int l = 0; l < commodities.size(); l++) {
+			for (int l = 0; l < commodities.size(); l++) { // iterate over all commodities
 				
 				Enumeration pathEnu = paths.keys();
 				zeta[l] = new GRBLinExpr();
-				while(pathEnu.hasMoreElements()){
+				while(pathEnu.hasMoreElements()){ //iterate over all paths
 					Object element = pathEnu.nextElement();
 					if(commodityMap.get(paths.get(element).get(0)) == (double)l){
-						zeta[l].addTerm(1, z[(int)element]);
+						zeta[l].addTerm(1, z[(int)element]); // if path belongs to current commodity, add it to the inequality 
 						System.out.println(z[(int)element].get(GRB.StringAttr.VarName));
 					}
 				}
@@ -254,7 +254,11 @@ public class MIP {
 			
 			
 			// optimize model
+			
 			model.optimize();
+			
+			//print result
+			
 			for (int i = 0; i < y.length; i++) {
 				System.out.println(y[i].get(GRB.StringAttr.VarName)+" "+y[i].get(GRB.DoubleAttr.X));
 			}
