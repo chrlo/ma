@@ -3,6 +3,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.Hashtable;
 
 public class Reader {
@@ -25,6 +26,17 @@ public class Reader {
 		Reader reader = new Reader();
 		Instance instance = new Instance();
 		instance = reader.read(instance);
+		System.out.println("Services before: "+instance.getServices().size());
+		System.out.println("Paths before: "+instance.getPaths().size());
+		Preprocessing1 prepro = new Preprocessing1();
+		instance = prepro.preprocess(instance);
+		System.out.println("Services afterwards: "+instance.getServices().size());
+		System.out.println("Paths afterward: "+instance.getPaths().size());
+		Enumeration enu = instance.getServices().keys();
+//		while (enu.hasMoreElements()) {
+//			Object element = enu.nextElement();
+//			System.out.println(instance.getServices().get(element));
+//		}
 	}
 	
 	public Instance read(Instance instance){
@@ -50,10 +62,11 @@ public class Reader {
 			br = new BufferedReader(new FileReader(input));
 			while((line = br.readLine()) != null){
 				
-					ArrayList<String> list = new ArrayList<String>(); // List for new path
-					paths.put(count, list);
-					String[] path = line.split(csvSplit);
+
 					if(count!= 0){// line 0 contains headers of the columns
+						ArrayList<String> list = new ArrayList<String>(); // List for new path
+						paths.put(count, list);
+						String[] path = line.split(csvSplit);
 						instance.getPathIDs().put(path[0],count); // give new path an ID
 						for (int i = 0; i < path.length; i++) { // add services to list which belong to path and put "unused"(case i=0), where commodity will appear later
 							if(i==0){

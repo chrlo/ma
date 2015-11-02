@@ -21,12 +21,24 @@ public class Preprocessing1 {
 		Hashtable <String,Double> commodityMap = instance.getCommodityMap(); // Maps Location Number to Name 
 		Hashtable <String, Double> LTLRates = instance.getLTLRates();
 		Enumeration enuPath = paths.keys();
+		int count = 0;
 		while(enuPath.hasMoreElements()){ //iterate over all paths
-			
-			for (int i = 1; i < paths.get(enuPath).size(); i++) { // iterate over all services on the path
-			
-					
+			Object element = enuPath.nextElement();
+			count++;
+
+		
+			if(paths.get(element).get(0).equals("unused")){
+				
+				for (int i = 1; i < paths.get(element).size(); i++) { // iterate over all services on the path
+					services.get(serviceMap.get(paths.get(element).get(i)))[3]--; // unassign path from service
+					if(services.get(serviceMap.get(paths.get(element).get(i)))[3]==0){ // case service isnt used by any path 
+						services.remove(serviceMap.get(paths.get(element).get(i))); // delete service
+						serviceMap.remove(paths.get(element).get(i)); 
+					}
 				}
+				paths.remove(element); // delete path
+					
+			}
 			
 		}
 		return instance;
