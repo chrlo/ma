@@ -41,10 +41,10 @@ public class Reader {
 	
 	public Instance read(Instance instance){
 	 
-		instance = readLTLRates(instance, "C:/Master/ltlrates.csv");		
-		instance = readServices(instance, "C:/Master/sections.csv");
-		instance =readPaths(instance, "C:/Master/routes.csv");
-		instance = readCommodities(instance, "C:/Master/orders2.csv");
+		instance = readLTLRates(instance, "C:/Users/Christopher/new_workspace/TEST DATA ANO/anoLTLrates.csv");		
+		instance = readServices(instance, "C:/Users/Christopher/new_workspace/TEST DATA ANO/anoSections.csv");
+		instance =readPaths(instance, "C:/Users/Christopher/new_workspace/TEST DATA ANO/anoRoutes.csv");
+		instance = readCommodities(instance, "C:/Users/Christopher/new_workspace/TEST DATA ANO/anoOrders.csv");
 		
 		return instance;
 	}
@@ -92,7 +92,7 @@ public class Reader {
 	}
 	
 	public Instance readServices(Instance instance, String input1){
-		Hashtable <String, Double> lTLRates = new Hashtable <String, Double>();
+		Hashtable <String, Double> lTLRates = instance.getLTLRates();
 		Hashtable <String,Integer> serviceMap = new Hashtable <String,Integer>();
 		Hashtable<Integer,Double[]> services = new Hashtable<Integer,Double[]>();		
 		BufferedReader br = null;
@@ -104,6 +104,7 @@ public class Reader {
 			while((line = br.readLine()) != null){
 				if(count!=0){ // line 0 contains headers of the columns
 					String[] service = line.split(csvSplit);
+				
 					serviceMap.put(service[0], count); // connect Service ID to a unique number
 					Double[] attributes; // array for attributes of the service (capacity, fix and variable costs,number of assigned paths)
 					attributes = new Double[4]; 
@@ -121,6 +122,8 @@ public class Reader {
 					}
 				count++;
 			}
+			
+
 			instance.setServices(services);
 			instance.setLTLRates(lTLRates);
 			instance.setServiceMap(serviceMap);
@@ -170,10 +173,10 @@ public class Reader {
 					
 					
 				}
-				instance.setLTLRates(lTLRates);
+				
 				count++;
 			}
-			
+			instance.setLTLRates(lTLRates);
 			
 		}catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -199,13 +202,13 @@ public Instance readCommodities(Instance instance, String input1){
 					String[] com = line.split(csvSplit);
 					Double[] commodity = new Double[3]; // array for each commodity containing source, sink (each as id) and weight
 					
-					if(!locationMap.containsKey(com[0].substring(0, com[0].indexOf("-")))){ // if (start) location comes up for the first time, an id is created						
-						locationMap.put(com[0].substring(0, com[0].indexOf("-")),(double)countCom);
-						commodity[0] = (double) (countCom); // start location id of commodity is set
-						countCom++;
-					}else{ 
-						commodity[0] = locationMap.get(com[0].substring(0, com[0].indexOf("-")-1)); // if (start) location already has an id, the id is put into the array
-					}
+//					if(!locationMap.containsKey(com[0].substring(0, com[0].indexOf("-")))){ // if (start) location comes up for the first time, an id is created						
+//						locationMap.put(com[0].substring(0, com[0].indexOf("-")),(double)countCom);
+//						commodity[0] = (double) (countCom); // start location id of commodity is set
+//						countCom++;
+//					}else{ 
+//						commodity[0] = locationMap.get(com[0].substring(0, com[0].indexOf("-")-1)); // if (start) location already has an id, the id is put into the array
+//					}
 					if(!locationMap.containsKey(com[1])){
 						locationMap.put(com[1],(double) countCom); //if (end) location comes up for the first time, an id is created
 						commodity[1] = (double) (countCom); // end location id of commodity is set

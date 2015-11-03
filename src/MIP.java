@@ -8,6 +8,7 @@ import gurobi.GRBVar;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Iterator;
 public class MIP {
 	
 	public static void main(String[] args) {
@@ -17,8 +18,12 @@ public class MIP {
 			
 			//Read input 
 			Instance instance = new Instance();
-			Reader reader = new Reader();
+			Reader reader = new Reader();			
 			instance = reader.read(instance);
+			System.out.println("FINISHED READING");
+			Preprocessing1 prepro = new Preprocessing1();
+			instance = prepro.preprocess(instance);
+			System.out.println("FINISHED PREPROCESSING");
 			
 			//preprocessing
 			//.
@@ -30,6 +35,7 @@ public class MIP {
 			Hashtable<Integer,Double[]> services = instance.getServices(); // first double= capacity, second= fixed cost, third= variable cost coefficient
 			Hashtable<Integer, ArrayList<String>> paths = instance.getPaths(); // first element on list= commodity, rest= services on path
 			Hashtable<String,Double> commodityMap = instance.getCommodityMap(); // maps commodity names to a unique number
+			Hashtable <String,Integer> serviceMap = instance.getServiceMap();
 			// fill them with data:
 			
 //			commodities.put(0,new Integer[] {1,1,1});
@@ -81,21 +87,22 @@ public class MIP {
 			
 			
 			//create variables
-			GRBVar[] y;
-			y = new GRBVar[services.size()];
-			for (int i = 0; i < y.length; i++) {
-				
-				y[i]  = model.addVar(0.0, 4.0, 0.0, GRB.BINARY, "y"+(i+1));
+			
+			Hashtable<Integer, GRBVar> y = new Hashtable<Integer, GRBVar>();
+			Enumeration yEnu = services.keys();
+			while (yEnu.hasMoreElements()) {
+				Object element = yEnu.nextElement();
+				GRBVar var = model.addVar(0.0, 4.0, 0.0, GRB.BINARY, "y"+((int)element+1));
+				y.put((int)element, var);
 			}
 			
 			Hashtable<Double,Hashtable<Double,GRBVar>> x = new Hashtable<Double,Hashtable<Double,GRBVar>>(); // key= commodities, element= hashtable of services, matching service number to variable
-			GRBVar[] z;
-			z = new GRBVar[paths.size()]; //one variable for each path
-			
-			for (int k = 0; k < z.length; k++) {
-				
-				z[k]  = model.addVar(0.0, 3.0, 0.0, GRB.BINARY, "z"+(k+1));
-	
+			Hashtable<Integer, GRBVar> z = new Hashtable<Integer, GRBVar>(); //one variable for each path
+			Enumeration zEnu = paths.keys();
+			while (zEnu.hasMoreElements()) {
+				Object element = zEnu.nextElement();
+				GRBVar var = model.addVar(0.0, 3.0, 0.0, GRB.BINARY, "z"+((int) element + 1));
+				z.put((int) element, var);
 			}
 //			z[0]  = model.addVar(0.0, 0.0, 0.0, GRB.BINARY, "z"+(1));
 //			z[1]  = model.addVar(0.0, 0.0, 0.0, GRB.BINARY, "z"+(2));
@@ -103,28 +110,40 @@ public class MIP {
 //			z[3]  = model.addVar(1.0, 1.0, 0.0, GRB.BINARY, "z"+(4));
 //			z[4]  = model.addVar(1.0, 1.0, 0.0, GRB.BINARY, "z"+(5));
 //			z[5]  = model.addVar(0.0, 0.0, 0.0, GRB.BINARY, "z"+(6));
-			
-			for (int l = 0; l < paths.size(); l++) { // every service on a path may create an x variable, as every path is uniquely assigned to a commodity (one service might be in multiple paths for the same commodity)
-				if(x.get(commodityMap.get(paths.get(l).get(0))) == null){ //create new hashmap for a commodity if commodity appears for the first time
+			Enumeration xEnu = paths.keys();
+			while (xEnu.hasMoreElements()) { // every service on a path may create an x variable, as every path is uniquely assigned to a commodity (one service might be in multiple paths for the same commodity)
+				Object element = xEnu.nextElement();
+				
+				if(x.get(commodityMap.get(paths.get(element).get(0))) == null){ //create new hashmap for a commodity if commodity appears for the first time
 					Hashtable<Double,GRBVar> hash = new Hashtable<Double,GRBVar>();
-					x.put(commodityMap.get(paths.get(l).get(0)), hash);
+					x.put(commodityMap.get(paths.get(element).get(0)), hash);
 				}
-				for (int m = 1; m < paths.get(l).size(); m++){
-					if(!x.get(commodityMap.get(paths.get(l).get(0))).contains(commodityMap.get(paths.get(l).get(m)))){// if variable doesnt already exist, create it
-						GRBVar var = model.addVar(0.0, 3.0, 0.0, GRB.BINARY, "x"+(commodityMap.get(paths.get(l).get(0))+1)+","+(commodityMap.get(paths.get(l).get(m))+1));;
-						x.get(commodityMap.get(paths.get(l).get(0))).put(commodityMap.get(paths.get(l).get(m)), var);
+				for (int m = 1; m < paths.get(element).size(); m++){
+					if(!x.get(commodityMap.get(paths.get(element).get(0))).containsKey((double)serviceMap.get(paths.get(element).get(m)))){// if variable doesnt already exist, create it
+						GRBVar var = model.addVar(0.0, 3.0, 0.0, GRB.BINARY, "x"+(commodityMap.get(paths.get(element).get(0))+1)+","+(serviceMap.get(paths.get(element).get(m))+1));;
+						x.get(commodityMap.get(paths.get(element).get(0))).put((double) serviceMap.get(paths.get(element).get(m)), var);
+						if(((double) serviceMap.get(paths.get(element).get(m))==212206.0)){
+							
+							//System.out.println(serviceMap.get("Tour20974"));
+							//System.out.println(services.get(212206)[0]);
+						}
 					}
 				}
 				
 			}	
 			
 			model.update();
+			System.out.println("FINISHED CREATING VARIABLES");
 			
 			//set objective
 			GRBLinExpr expr = new GRBLinExpr();
-			for (int i = 0; i < y.length; i++) {
-			
-					expr.addTerm(services.get(i)[1], y[i]); // fixed cost times y_i
+			Enumeration serviceEnu = services.keys();
+			int serviceCount = 0;
+			while (serviceEnu.hasMoreElements()) {
+				Object element = serviceEnu.nextElement();
+				
+					expr.addTerm(services.get(element)[1], y.get(element)); // fixed cost times y_i
+					serviceCount++;
 					//System.out.println(services.get(i)[1]+","+y[i].get(GRB.StringAttr.VarName));
 			
 			}
@@ -135,8 +154,10 @@ public class MIP {
 				Enumeration f = x.get(element).keys();
 				while(f.hasMoreElements()) {
 					countX++;
+					
 					Object element2 = f.nextElement(); // Service
-					expr.addTerm(services.get(element2)[2]*commodities.get(element)[2], x.get(element).get(element2)); //variable costs times weight times x_s^k
+					
+					expr.addTerm(services.get((int)Math.round((double)element2))[2]*commodities.get((int)Math.round((double)element))[2], x.get(element).get(element2)); //variable costs times weight times x_s^k
 				//	System.out.println(services.get(element2)[2]*commodities.get(element)[2]+","+x.get(element).get(element2).get(GRB.StringAttr.VarName));
 				}
 			}
@@ -144,35 +165,43 @@ public class MIP {
 				
 			model.setObjective(expr,GRB.MINIMIZE);
 			
+			System.out.println("FINISHED SETTING OBJECTIVE");
 			//Add constraints
 			
-			GRBLinExpr[] beta;
-			beta = new GRBLinExpr[y.length];
-			GRBLinExpr[] delta;
-			delta = new GRBLinExpr[countX];
-			GRBLinExpr[] epsilon;
-			epsilon = new GRBLinExpr[countX];
-			GRBLinExpr[] zeta;
-			zeta = new GRBLinExpr[commodities.size()];
+			Hashtable<Integer, GRBLinExpr> beta = new Hashtable<Integer, GRBLinExpr>();
+			Hashtable<Integer, GRBLinExpr> delta = new Hashtable<Integer, GRBLinExpr>();
+			Hashtable<Integer, GRBLinExpr> epsilon = new Hashtable<Integer, GRBLinExpr>();
+			Hashtable<Integer, GRBLinExpr> zeta = new Hashtable<Integer, GRBLinExpr>();
+//			GRBLinExpr[] beta;
+//			beta = new GRBLinExpr[y.size()];
+//			GRBLinExpr[] delta;
+//			delta = new GRBLinExpr[countX];
+//			GRBLinExpr[] epsilon;
+//			epsilon = new GRBLinExpr[countX];
+//			GRBLinExpr[] zeta;
+//			zeta = new GRBLinExpr[commodities.size()];
 			
-			for (int i = 0; i < y.length; i++) {
-				
-					beta[i] = new GRBLinExpr();
-					beta[i].addTerm(services.get(i)[0], y[i]); //u_w(s)y_s
+			Enumeration betaEnu = y.keys();
+			while (betaEnu.hasMoreElements()) {
+					Object i = betaEnu.nextElement();
+					beta.put((int) i, new GRBLinExpr());
+					beta.get((int) i).addTerm(services.get((int)i)[0], y.get((int) i)); //u_w(s)y_s
 					//System.out.println(services.get(i)[0]+""+y[i].get(GRB.StringAttr.VarName));
 					Enumeration enu = x.keys(); 
 					while(enu.hasMoreElements()){ //iterate over commodities
 						Object element = enu.nextElement();
 						if (x.get(element).get(i) != null) {// x_s^{k} exists: s could be used for k and the relevant term is added 
-							beta[i].addTerm(-(commodities.get(element)[2]), x.get(element).get(i)); //-d_w(k)x_s^k
+							beta.get((int) i).addTerm(-(commodities.get(element)[2]), x.get(element).get(i)); //-d_w(k)x_s^k
 						//	System.out.println(-(commodities.get(element)[2])+","+ x.get(element).get(i).get(GRB.StringAttr.VarName));
 						}
 						
 					}
 					
-					model.addConstr(beta[i], GRB.GREATER_EQUAL, 0, "beta"+(i+1));
+					model.addConstr(beta.get((int) i), GRB.GREATER_EQUAL, 0, "beta"+((int) i + 1));
 	
 			}
+			
+			System.out.println("FINISHED CREATING VARIABLES BETA");
 			
 			Enumeration enu2 = x.keys();
 			int countDelta = 0; 
@@ -181,16 +210,17 @@ public class MIP {
 					Enumeration enu22 = x.get(element).keys(); 
 					while(enu22.hasMoreElements()){ // enumerate over services
 						Object element2 = enu22.nextElement();
-						delta[countDelta] = new GRBLinExpr();
-						delta[countDelta].addTerm(1, y[(int)element2]);
+						delta.put(countDelta, new GRBLinExpr()); 
+						delta.get(countDelta).addTerm(1, y.get((int) Math.round((double)element2)));
 						//System.out.println(y[(int)element2].get(GRB.StringAttr.VarName));
-						delta[countDelta].addTerm(-1, x.get(element).get(element2));
+						delta.get(countDelta).addTerm(-1, x.get(element).get(element2));
 						//System.out.println("-"+ x.get(element).get(element2).get(GRB.StringAttr.VarName));
 
-						model.addConstr(delta[countDelta], GRB.GREATER_EQUAL, 0, "delta"+(countDelta+1)); // for every existing x_s^k variable there is one inequality y_s - x_s^k >= 0
+						model.addConstr(delta.get(countDelta), GRB.GREATER_EQUAL, 0, "delta"+(countDelta+1)); // for every existing x_s^k variable there is one inequality y_s - x_s^k >= 0
 						countDelta++;
 					}
 			}
+			System.out.println("FINISHED CREATING VARIABLES DELTA");
 			//System.out.println(countDelta);
 			Enumeration enu3 = x.keys();
 			int countEpsilon = 0;
@@ -199,8 +229,8 @@ public class MIP {
 					Enumeration enu32 = x.get(element).keys(); 
 					while(enu32.hasMoreElements()){ // iterate over services
 						Object element2 = enu32.nextElement();
-						epsilon[countEpsilon] = new GRBLinExpr();
-						epsilon[countEpsilon].addTerm(1, x.get(element).get(element2)); // for every existing x_s^k variable there is one inequality
+						epsilon.put(countEpsilon, new GRBLinExpr());
+						epsilon.get(countEpsilon).addTerm(1, x.get(element).get(element2)); // for every existing x_s^k variable there is one inequality
 						//System.out.println(x.get(element).get(element2).get(GRB.StringAttr.VarName));
 						Enumeration pathEnu = paths.keys();
 						while(pathEnu.hasMoreElements()){ //iterate over all paths
@@ -220,38 +250,40 @@ public class MIP {
 							}
 							
 							if ( dummy.contains(element2) && commodityMap.get(paths.get(element3).get(0)).equals(element)) { // if current service is on the current path and the current path belongs to the current commodity: add - z_p^k to the inequality
-								epsilon[countEpsilon].addTerm(-1, z[(int)element3]);
+								epsilon.get(countEpsilon).addTerm(-1, z.get((int)element3));
 								//System.out.println("-"+z[(int)element3].get(GRB.StringAttr.VarName));
 							}
 							
 							
 						}
-						model.addConstr(epsilon[countEpsilon], GRB.GREATER_EQUAL, 0, "epsilon"+(countEpsilon+1));
+						model.addConstr(epsilon.get(countEpsilon), GRB.GREATER_EQUAL, 0, "epsilon"+(countEpsilon+1));
 						countEpsilon++;
 					}
 			}
 					
 					
-					
+			System.out.println("FINISHED CREATING VARIABLES EPSILON");		
 			
-			for (int l = 0; l < commodities.size(); l++) { // iterate over all commodities
-				
+			Enumeration zetaEnu = commodities.keys();
+			
+			while (zetaEnu.hasMoreElements()) { // iterate over all commodities
+				Object l = zetaEnu.nextElement();
 				Enumeration pathEnu = paths.keys();
-				zeta[l] = new GRBLinExpr();
+				zeta.put((int) l, new GRBLinExpr());
 				while(pathEnu.hasMoreElements()){ //iterate over all paths
 					Object element = pathEnu.nextElement();
-					if(commodityMap.get(paths.get(element).get(0)) == (double)l){
-						zeta[l].addTerm(1, z[(int)element]); // if path belongs to current commodity, add it to the inequality 
-						System.out.println(z[(int)element].get(GRB.StringAttr.VarName));
+					if(commodityMap.get(paths.get(element).get(0)) == (double)(int)l){
+						zeta.get((int) l).addTerm(1, z.get((int)element)); // if path belongs to current commodity, add it to the inequality 
+
 					}
 				}
-				System.out.println(l+"stop");
-				model.addConstr(zeta[l], GRB.GREATER_EQUAL, 1., "zeta"+(l+1));
+				
+				model.addConstr(zeta.get((int)l), GRB.GREATER_EQUAL, 1., "zeta"+((int) l+1));
 				
 			}
 			
 			
-			
+			System.out.println("FINISHED ADDING CONSTRAINTS");
 			
 			// optimize model
 			
@@ -259,8 +291,10 @@ public class MIP {
 			
 			//print result
 			
-			for (int i = 0; i < y.length; i++) {
-				System.out.println(y[i].get(GRB.StringAttr.VarName)+" "+y[i].get(GRB.DoubleAttr.X));
+			Enumeration yPrint = y.keys();
+			while (yPrint.hasMoreElements()) {
+				Object i = yPrint.nextElement();
+				System.out.println(y.get((int) i).get(GRB.StringAttr.VarName)+" "+y.get((int) i).get(GRB.DoubleAttr.X));
 			}
 			Enumeration en = x.keys();
 			while (en.hasMoreElements()) { // enumerate over commodities
@@ -271,8 +305,11 @@ public class MIP {
 						System.out.println(x.get(element).get(element2).get(GRB.StringAttr.VarName)+" "+x.get(element).get(element2).get(GRB.DoubleAttr.X));
 					}
 			}
-			for (int k = 0; k < z.length; k++) {
-				System.out.println(z[k].get(GRB.StringAttr.VarName)+" "+z[k].get(GRB.DoubleAttr.X));
+			
+			Enumeration zPrint = z.keys();
+			while (zPrint.hasMoreElements()) {
+				Object k = zPrint.nextElement();
+				System.out.println(z.get((int) k).get(GRB.StringAttr.VarName)+" "+z.get((int) k).get(GRB.DoubleAttr.X));
 			}	
 			
 			
