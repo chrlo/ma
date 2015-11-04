@@ -41,10 +41,10 @@ public class Reader {
 	
 	public Instance read(Instance instance){
 	 
-		instance = readLTLRates(instance, "C:/Users/Christopher/new_workspace/TEST DATA ANO/anoLTLrates.csv");		
-		instance = readServices(instance, "C:/Users/Christopher/new_workspace/TEST DATA ANO/anoSections.csv");
-		instance =readPaths(instance, "C:/Users/Christopher/new_workspace/TEST DATA ANO/anoRoutes.csv");
-		instance = readCommodities(instance, "C:/Users/Christopher/new_workspace/TEST DATA ANO/anoOrders.csv");
+		instance = readLTLRates(instance, "C:/Master/Testdaten/04_11_2015/2/LTLrates.csv");		
+		instance = readServices(instance, "C:/Master/Testdaten/04_11_2015/2/Sections.csv");
+		instance =readPaths(instance, "C:/Master/Testdaten/04_11_2015/2/Routes.csv");
+		instance = readCommodities(instance, "C:/Master/Testdaten/04_11_2015/2/Orders.csv");
 		
 		return instance;
 	}

@@ -4,7 +4,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Hashtable;
 
 
@@ -30,10 +29,10 @@ public class Anonymize {
 		ano.locations = new Hashtable<String,String>();
 		ano.commodities = new Hashtable<String,String>();
 		ano.ltlrates = new Hashtable<String,String>();
-		ano.routes("C:/Users/Christopher/new_workspace/routes.csv");
-		ano.ltlrates("C:/Users/Christopher/new_workspace/ltlrates.csv");
-		ano.sections("C:/Users/Christopher/new_workspace/sections.csv");
-		ano.orders("C:/Users/Christopher/new_workspace/orders2.csv");
+		ano.routes("C:/Master/Testdaten/04_11_2015/2/Routes.csv");
+		ano.ltlrates("C:/Master/Testdaten/04_11_2015/2/LTLRates.csv");
+		ano.sections("C:/Master/Testdaten/04_11_2015/2/Sections.csv");
+		ano.orders("C:/Master/Testdaten/04_11_2015/2/Orders.csv");
 
 	}
 	
@@ -46,7 +45,7 @@ public class Anonymize {
 		BufferedReader br = null;
 		String line = "";
 		String csvSplit = ";";
-		File file = new File("C:/Users/Christopher/new_workspace/anoRoutes.csv");
+		File file = new File("C:/Master/Testdaten/04_11_2015/2/anoRoutes.csv");
 		
 		
 		try{
@@ -105,7 +104,7 @@ public class Anonymize {
 		BufferedReader br = null;
 		String line = "";
 		String csvSplit = ";";
-		File file = new File("C:/Users/Christopher/new_workspace/anoSections.csv");
+		File file = new File("C:/Master/Testdaten/04_11_2015/2/anoSections.csv");
 		try{
 			if (!file.exists()){
 				file.createNewFile();
@@ -173,7 +172,7 @@ public class Anonymize {
 		BufferedReader br = null;
 		String line = "";
 		String csvSplit = ";";
-		File file = new File("C:/Users/Christopher/new_workspace/anoOrders.csv");
+		File file = new File("C:/Master/Testdaten/04_11_2015/2/anoOrders.csv");
 		try{
 			if (!file.exists()){
 				file.createNewFile();
@@ -245,7 +244,7 @@ public class Anonymize {
 		BufferedReader br = null;
 		String line = "";
 		String csvSplit = ";";
-		File file = new File("C:/Users/Christopher/new_workspace/anoLTLRates.csv");
+		File file = new File("C:/Master/Testdaten/04_11_2015/2/anoLTLRates.csv");
 		try{
 			FileWriter csvOutput = new FileWriter(file, true);
 			br = new BufferedReader(new FileReader(input));

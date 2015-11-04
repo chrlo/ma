@@ -21,9 +21,12 @@ public class MIP {
 			Reader reader = new Reader();			
 			instance = reader.read(instance);
 			System.out.println("FINISHED READING");
-			Preprocessing1 prepro = new Preprocessing1();
-			instance = prepro.preprocess(instance);
-			System.out.println("FINISHED PREPROCESSING");
+			Preprocessing1 prepro1 = new Preprocessing1();
+			instance = prepro1.preprocess(instance);
+			System.out.println("FINISHED PREPROCESSING1");
+			Preprocessing2 prepro2 = new Preprocessing2();
+			instance = prepro2.preprocess(instance);
+			System.out.println("FINISHED PREPROCESSING2");
 			
 			//preprocessing
 			//.

@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.Hashtable;
 
 
@@ -73,7 +74,14 @@ public class Instance {
 		return LTLRates;
 	}
 	public void setLTLRates(Hashtable<String, Double> lTLRates) {
-		LTLRates = lTLRates;
+		this.LTLRates = lTLRates;
+	}
+	public void printServiceCapacities(){
+		Enumeration enu = this.serviceMap.keys();
+		while(enu.hasMoreElements()){
+			Object element = enu.nextElement();
+			System.out.println("Service: "+element+" Capacity: "+ services.get(serviceMap.get(element))[0]);
+		}
 	}
 	
 
