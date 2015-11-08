@@ -41,10 +41,10 @@ public class Reader {
 	
 	public Instance read(Instance instance){
 	 
-		instance = readLTLRates(instance, "C:/Master/Testdaten/04_11_2015/2/LTLrates.csv");		
-		instance = readServices(instance, "C:/Master/Testdaten/04_11_2015/2/Sections.csv");
-		instance =readPaths(instance, "C:/Master/Testdaten/04_11_2015/2/Routes.csv");
-		instance = readCommodities(instance, "C:/Master/Testdaten/04_11_2015/2/Orders.csv");
+		instance = readLTLRates(instance, "C:/Users/Christopher/new_workspace/Testdaten/04_11_2015/1/LTLrates.csv");		
+		instance = readServices(instance, "C:/Users/Christopher/new_workspace/Testdaten/04_11_2015/1/Sections.csv");
+		instance =readPaths(instance, "C:/Users/Christopher/new_workspace/Testdaten/04_11_2015/1/Routes.csv");
+		instance = readCommodities(instance, "C:/Users/Christopher/new_workspace/Testdaten/04_11_2015/1/Orders.csv");
 		
 		return instance;
 	}
@@ -220,6 +220,10 @@ public Instance readCommodities(Instance instance, String input1){
 					commodity[2] = Double.parseDouble(com[3].replaceAll(",", ".")); // set the weight of the commodity
 					instance.getCommodities().put(count, commodity); //add commodity to list
 					for (int i = 6; i < com.length; i++) { // all paths which belong to the commodity (od-pair) get the information that they do						
+						if(!paths.get(instance.getPathIDs().get(com[i])).get(0).equals("unused")){ 
+							// if path already belongs to a commodity, a new path has to be added 
+							
+						}
 						paths.get(instance.getPathIDs().get(com[i])).set(0, com[0]);
 						
 					}

@@ -35,9 +35,7 @@ public class Preprocessing2 {
 		while(pathEnu.hasMoreElements()){ // calculate max possible flow for every service 
 			Object path = pathEnu.nextElement();
 			for (int i = 1; i < paths.get(path).size(); i++) {
-				if(paths.get(path).get(i).equals("Tour2")){
-					System.out.println("HAAAAAAAAAAAAALT");
-				}
+				
 				if(!maxNecessaryCapacity.containsKey(paths.get(path).get(i))){ // create new entry if service appears for the first time
 					ArrayList<String> alreadyUsed = new ArrayList<String>();
 					alreadyUsed.add(paths.get(path).get(0));
@@ -55,13 +53,13 @@ public class Preprocessing2 {
 		}
 		
 		Enumeration serviceEnu = serviceMap.keys();
-		while(serviceEnu.hasMoreElements()){
-			Object element = serviceEnu.nextElement();
-			System.out.println("Service " + element + " hat Kapazität: " + services.get(serviceMap.get(element))[0] + " vs. Max nötige Kapazität: " + maxNecessaryCapacity.get(element));
-			if(services.get(serviceMap.get(element))[0] > maxNecessaryCapacity.get(element)){
-				services.get(serviceMap.get(element))[0] = maxNecessaryCapacity.get(element);
-			}
-		}
+//		while(serviceEnu.hasMoreElements()){
+//			Object element = serviceEnu.nextElement();
+//			System.out.println("Service " + element + " hat Kapazität: " + services.get(serviceMap.get(element))[0] + " vs. Max nötige Kapazität: " + maxNecessaryCapacity.get(element));
+//			if(services.get(serviceMap.get(element))[0] > maxNecessaryCapacity.get(element)){
+//				services.get(serviceMap.get(element))[0] = maxNecessaryCapacity.get(element);
+//			}
+//		}
 		instance.setServices(services);
 		return instance;
 	}
