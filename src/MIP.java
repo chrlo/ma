@@ -13,6 +13,7 @@ public class MIP {
 	
 	public static void main(String[] args) {
 		try{
+			final long timeStart = System.currentTimeMillis();
 			GRBEnv env = new GRBEnv("mip.log");
 			GRBModel model = new GRBModel(env);
 			
@@ -21,14 +22,17 @@ public class MIP {
 			Reader reader = new Reader();			
 			instance = reader.read(instance);
 			System.out.println("FINISHED READING");
+			System.out.println((System.currentTimeMillis()-timeStart));
 			
 			//preprocessing
 			Preprocessing1 prepro1 = new Preprocessing1();
 			instance = prepro1.preprocess(instance);
 			System.out.println("FINISHED PREPROCESSING1");
+			System.out.println((System.currentTimeMillis()-timeStart));
 			Preprocessing2 prepro2 = new Preprocessing2();
 			instance = prepro2.preprocess(instance);
 			System.out.println("FINISHED PREPROCESSING2");
+			System.out.println((System.currentTimeMillis()-timeStart));
 			
 			
 			
@@ -95,7 +99,7 @@ public class MIP {
 			Enumeration yEnu = services.keys();
 			while (yEnu.hasMoreElements()) {
 				Object element = yEnu.nextElement();
-				GRBVar var = model.addVar(0.0, GRB.INFINITY, 0.0, GRB.INTEGER, "y"+((int)element));
+				GRBVar var = model.addVar(0.0, GRB.INFINITY, 0.0, GRB.CONTINUOUS, "y"+((int)element));
 				y.put((int)element, var);
 			}
 			
@@ -115,17 +119,17 @@ public class MIP {
 //				if((double)(int)element == 1.0||(double)(int)element == 14.0||(double)(int)element == 21.0||(double)(int)element == 4.0||(double)(int)element == 17.0||(double)(int)element == 12.0){
 //					var = model.addVar(1.0, GRB.INFINITY, 0.0, GRB.INTEGER, "z"+((int) element ));
 //				}else{
-					var = model.addVar(0.0, GRB.INFINITY, 0.0, GRB.INTEGER, "z"+((int) element ));
+					var = model.addVar(0.0, GRB.INFINITY, 0.0, GRB.CONTINUOUS, "z"+((int) element ));
 //				}
 				z.put((int) element, var);
 			}
 			//
-			Enumeration zEnume = paths.keys();
-			while (zEnume.hasMoreElements()) {
-				Object element = zEnume.nextElement();
-				System.out.println("Path: " + paths.get(element).toString() + " | Variable: z :" + (int) element);
-				
-			}
+//			Enumeration zEnume = paths.keys();
+//			while (zEnume.hasMoreElements()) {
+//				Object element = zEnume.nextElement();
+//				System.out.println("Path: " + paths.get(element).toString() + " | Variable: z :" + (int) element);
+//				
+//			}
 			
 //			z[0]  = model.addVar(0.0, 0.0, 0.0, GRB.BINARY, "z"+(1));
 //			z[1]  = model.addVar(0.0, 0.0, 0.0, GRB.BINARY, "z"+(2));
@@ -143,7 +147,7 @@ public class MIP {
 				}
 				for (int m = 1; m < paths.get(element).size(); m++){
 					if(!x.get(commodityMap.get(paths.get(element).get(0))).containsKey((double)serviceMap.get(paths.get(element).get(m)))){// if variable doesnt already exist, create it
-						GRBVar var = model.addVar(0.0, GRB.INFINITY, 0.0, GRB.INTEGER, "x"+(commodityMap.get(paths.get(element).get(0)))+","+(serviceMap.get(paths.get(element).get(m))));;
+						GRBVar var = model.addVar(0.0, GRB.INFINITY, 0.0, GRB.CONTINUOUS, "x"+(commodityMap.get(paths.get(element).get(0)))+","+(serviceMap.get(paths.get(element).get(m))));;
 						x.get(commodityMap.get(paths.get(element).get(0))).put((double) serviceMap.get(paths.get(element).get(m)), var);
 //						
 					}
@@ -164,6 +168,7 @@ public class MIP {
 //			
 			model.update();
 			System.out.println("FINISHED CREATING VARIABLES");
+			System.out.println((System.currentTimeMillis()-timeStart));
 			
 			//set objective
 			GRBLinExpr expr = new GRBLinExpr();
@@ -196,6 +201,7 @@ public class MIP {
 			model.setObjective(expr,GRB.MINIMIZE);
 			
 			System.out.println("FINISHED SETTING OBJECTIVE");
+			System.out.println((System.currentTimeMillis()-timeStart));
 			//Add constraints
 			
 			Hashtable<Integer, GRBLinExpr> beta = new Hashtable<Integer, GRBLinExpr>();
@@ -232,6 +238,7 @@ public class MIP {
 			}
 			
 			System.out.println("FINISHED CREATING VARIABLES BETA");
+			System.out.println((System.currentTimeMillis()-timeStart));
 			
 			Enumeration enu2 = x.keys();
 			int countDelta = 0; 
@@ -251,6 +258,7 @@ public class MIP {
 					}
 			}
 			System.out.println("FINISHED CREATING VARIABLES DELTA");
+			System.out.println((System.currentTimeMillis()-timeStart));
 			//System.out.println(countDelta);
 			Enumeration enu3 = x.keys();
 			int countEpsilon = 0;
@@ -293,7 +301,8 @@ public class MIP {
 			}
 					
 					
-			System.out.println("FINISHED CREATING VARIABLES EPSILON");		
+			System.out.println("FINISHED CREATING VARIABLES EPSILON");	
+			System.out.println((System.currentTimeMillis()-timeStart));
 			
 			Enumeration zetaEnu = commodities.keys();
 			
@@ -308,13 +317,14 @@ public class MIP {
 //						System.out.println(z.get((int)element).get(GRB.StringAttr.VarName));
 					}
 				}
-//				System.out.println("STOP")
+//				System.out.println("STOP");
 				model.addConstr(zeta.get((int)l), GRB.GREATER_EQUAL, 1., "zeta"+((int) l+1));
 				
 			}
 			
 			
 			System.out.println("FINISHED ADDING CONSTRAINTS");
+			System.out.println((System.currentTimeMillis()-timeStart));
 			
 			// optimize model
 			
@@ -352,7 +362,7 @@ public class MIP {
 				
 			}	
 			
-			
+			System.out.println((System.currentTimeMillis()-timeStart));
 			// Dispose of model and environment
 			
 			model.dispose();

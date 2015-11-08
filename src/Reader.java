@@ -41,10 +41,10 @@ public class Reader {
 	
 	public Instance read(Instance instance){
 	 
-		instance = readLTLRates(instance, "C:/Users/Christopher/new_workspace/Testdaten/04_11_2015/1/LTLrates.csv");		
-		instance = readServices(instance, "C:/Users/Christopher/new_workspace/Testdaten/04_11_2015/1/Sections.csv");
-		instance =readPaths(instance, "C:/Users/Christopher/new_workspace/Testdaten/04_11_2015/1/Routes.csv");
-		instance = readCommodities(instance, "C:/Users/Christopher/new_workspace/Testdaten/04_11_2015/1/Orders.csv");
+		instance = readLTLRates(instance, "C:/Users/Christopher/new_workspace/Testdaten/TEST DATA ANO/anoLTLrates.csv");		
+		instance = readServices(instance, "C:/Users/Christopher/new_workspace/Testdaten/TEST DATA ANO/anoSections.csv");
+		instance =readPaths(instance, "C:/Users/Christopher/new_workspace/Testdaten/TEST DATA ANO/anoRoutes.csv");
+		instance = readCommodities(instance, "C:/Users/Christopher/new_workspace/Testdaten/TEST DATA ANO/anoOrders.csv");
 		
 		return instance;
 	}
@@ -195,6 +195,7 @@ public Instance readCommodities(Instance instance, String input1){
 		String csvSplit = ";";
 		int count = 0;
 		int countCom = 1;
+		int pathCount = paths.size()+1; // for IDs of new paths
 		try{
 			br = new BufferedReader(new FileReader(input1));
 			while((line = br.readLine()) != null){
@@ -222,9 +223,17 @@ public Instance readCommodities(Instance instance, String input1){
 					for (int i = 6; i < com.length; i++) { // all paths which belong to the commodity (od-pair) get the information that they do						
 						if(!paths.get(instance.getPathIDs().get(com[i])).get(0).equals("unused")){ 
 							// if path already belongs to a commodity, a new path has to be added 
+							ArrayList<String> dummy = new ArrayList<String>();
+							dummy = (ArrayList<String>) paths.get(instance.getPathIDs().get(com[i])).clone();
+							dummy.set(0, com[0]);
+							instance.getPathIDs().put(com[i]+com[0],pathCount); // Pathname + Commodityname must be unique!!!!
+							paths.put(pathCount, dummy);
+							pathCount++;
 							
+						}else{
+							paths.get(instance.getPathIDs().get(com[i])).set(0, com[0]);
 						}
-						paths.get(instance.getPathIDs().get(com[i])).set(0, com[0]);
+						
 						
 					}
 					commodityMap.put(com[0], (double) count);
